@@ -1,0 +1,37 @@
+---
+- hosts: localhost
+  become: true
+  tasks:
+    - name: Check if the path of first run and second run are passed
+      fail:
+        msg: "first_run and second_run should be passed using --extra-vars"
+      when: first_run is not defined or second_run is not defined
+
+    - name: Convert paths into absolute paths
+      set_fact:
+        first_run_abs: "{{ first_run|realpath }}"
+        second_run_abs: "{{ second_run|realpath }}"
+    
+    - name: List all files in first_run and second_run
+      find:
+        paths: "{{ first_run_abs }},{{ second_run_abs }}"
+        recurse: true
+        hidden: true
+      register: full_list
+
+    - name: Get unique relative paths
+      set_fact:
+        full_list: |
+          {% set f_list = [] -%}
+          {% for fl in full_list.files -%}
+            {% set dump = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
+          {%- endfor %}
+          {{ f_list|unique }}
+
+    - name: Show the difference between two runs
+      copy:
+        src: "{{ second_run_abs }}/{{ item }}"
+        dest: "{{ first_run_abs }}/{{ item }}"
+      check_mode: true
+      diff: true
+      with_items: "{{ full_list }}"
