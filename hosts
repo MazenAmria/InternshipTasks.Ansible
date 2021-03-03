@@ -1,0 +1,8 @@
+[hypervisor]
+192.168.1.14
+
+[undercloud]
+192.168.1.110
+
+[overcloud]
+192.168.1.112
