@@ -12,37 +12,39 @@
         first_run_abs: "{{ first_run|realpath }}"
         second_run_abs: "{{ second_run|realpath }}"
     
-    - name: List all files in first_run and second_run
+    - name: List all files in both runs
       find:
-        paths: "{{ first_run_abs }},{{ second_run_abs }}"
+        paths: "{{ first_run_abs }}, {{ second_run_abs }}"
         recurse: true
         hidden: true
-      register: full_list
-
+      register: files_list
+    
     - name: Get unique relative paths
       set_fact:
-        full_list: |
-          {% set f_list = {} -%}
-          {% set l = ['mode'] -%}
-          {% for fl in full_list.files -%}
-            {% if fl.path.startswith(first_run_abs) -%}
-              {% if fl.path[first_run_abs|length + 1:] not in f_list -%}
-                {% set f_list[fl.path[first_run_abs|length + 1:]] = {} %}
-              {%- endif %}
-              {% set f_list[fl.path[first_run_abs|length + 1:]]['before'] = {} -%}
-            {%- else -%}
-              {% if fl.path[second_run_abs|length + 1:] not in f_list -%}
-                {% set f_list[fl.path[second_run_abs|length + 1:]] = {} %}
-              {%- endif %}
-              {% set f_list[fl.path[second_run_abs|length + 1:]]['after'] = {} -%}
-            {%- endif %}
+        files_list: |
+          {% set f_list = [] -%}
+          {% for fl in files_list.files -%}
+            {% set dump = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
           {%- endfor %}
-          {{ f_list }}
+          {{ f_list|unique }}
 
-    - name: Show the difference between two runs
-      copy:
-        src: "{{ second_run_abs }}/{{ item }}"
-        dest: "{{ first_run_abs }}/{{ item }}"
-      check_mode: true
-      diff: true
-      with_items: "{{ full_list.keys() }}"
+    - name: Find the difference between two runs
+      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}"
+      with_items: "{{ files_list }}"
+      register: diff_dict
+      # If difference found it returns non-zero so errors
+      # must be ignored since errors are just differences
+      ignore_errors: true
+    
+    - name: Reindexing the difference dictionary
+      set_fact:
+        diff_list: "{{ diff_list | default({}) | combine(new_item, recursive=true) }}"
+      vars:
+        item_pre:
+          - key: "{{ item.item }}"
+            value: "{{ item.stdout }}"
+        new_item: "{{ item_pre | items2dict }}"
+      with_items: "{{ diff_dict.results }}"
+    
+    - debug:
+        var: diff_list
