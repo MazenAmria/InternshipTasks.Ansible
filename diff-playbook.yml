@@ -22,11 +22,22 @@
     - name: Get unique relative paths
       set_fact:
         full_list: |
-          {% set f_list = [] -%}
+          {% set f_list = {} -%}
+          {% set l = ['mode'] -%}
           {% for fl in full_list.files -%}
-            {% set dump = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
+            {% if fl.path.startswith(first_run_abs) -%}
+              {% if fl.path[first_run_abs|length + 1:] not in f_list -%}
+                {% set f_list[fl.path[first_run_abs|length + 1:]] = {} %}
+              {%- endif %}
+              {% set f_list[fl.path[first_run_abs|length + 1:]]['before'] = {} -%}
+            {%- else -%}
+              {% if fl.path[second_run_abs|length + 1:] not in f_list -%}
+                {% set f_list[fl.path[second_run_abs|length + 1:]] = {} %}
+              {%- endif %}
+              {% set f_list[fl.path[second_run_abs|length + 1:]]['after'] = {} -%}
+            {%- endif %}
           {%- endfor %}
-          {{ f_list|unique }}
+          {{ f_list }}
 
     - name: Show the difference between two runs
       copy:
@@ -34,4 +45,4 @@
         dest: "{{ first_run_abs }}/{{ item }}"
       check_mode: true
       diff: true
-      with_items: "{{ full_list }}"
+      with_items: "{{ full_list.keys() }}"

@@ -1,8 +1,8 @@
 [hypervisor]
-192.168.1.14
+server2
 
 [undercloud]
-192.168.1.110
+server3
 
 [overcloud]
-192.168.1.112
+server4

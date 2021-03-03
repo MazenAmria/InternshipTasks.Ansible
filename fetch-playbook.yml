@@ -29,9 +29,9 @@
           {% for key in items.keys() -%}
             {% for item in items[key] -%}
               {% if item.folder is defined -%}
-                {% set dump = temp_items.append({'path': '/'.join([item.path if item.path[-1] != '/' else item.path[:-1], item.folder]), 'group': '_'.join(key.split('_')[:-1])}) -%}
+                {% set dummy = temp_items.append({'path': '/'.join([item.path if item.path[-1] != '/' else item.path[:-1], item.folder]), 'group': '_'.join(key.split('_')[:-1])}) -%}
               {%- else -%}
-                {% set dump = temp_items.append({'path': item.path if item.path[-1] != '/' else item.path[:-1], 'group': '_'.join(key.split('_')[:-1])}) -%}
+                {% set dummy = temp_items.append({'path': item.path if item.path[-1] != '/' else item.path[:-1], 'group': '_'.join(key.split('_')[:-1])}) -%}
               {%- endif %}
             {%- endfor %}
           {%- endfor %}
