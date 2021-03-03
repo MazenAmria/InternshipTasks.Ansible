@@ -74,6 +74,23 @@
         new_item: "{{ item_pre | items2dict }}"
       with_items: "{{ second_list.files }}"
 
+    - name: Find SElinux context of first run
+      shell: "diff <(ls -lZ {{ first_run_abs }}/{{ item }} | cut -d' ' -f4 | awk -v RS=: 1) <(ls -lZ {{ second_run_abs }}/{{ item }} | cut -d' ' -f4 | awk -v RS=: 1); true"
+      args:
+        executable: /bin/bash
+      with_items: "{{ files_stat.keys() }}"
+      register: selinux_diff
+
+    - name: Reindexing the SElinux context difference
+      set_fact:
+        selinux_diff_dict: "{{ selinux_diff_dict | default({}) | combine(new_item, recursive=true) }}"
+      vars:
+        item_pre:
+          - key: "{{ item.item }}"
+            value: "{{ item.stdout }}"
+        new_item: "{{ item_pre | items2dict }}"
+      with_items: "{{ selinux_diff.results }}"
+
     - name: Find the difference in stats
       set_fact:
         stats_diff: "{{ stats_diff | default({}) | combine(new_item, recursive=true) }}"
@@ -89,16 +106,16 @@
                   {%- endif %}
                 {%- endfor %}
                 {{ stat_d }}
+              selinux_context: "{{ selinux_diff_dict[item] }}"
         new_item: "{{ item_pre | items2dict }}"
       with_items: "{{ files_stat.keys() }}"
 
     - name: Find the difference between two runs
-      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}"
+      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}; true"
+      args:
+        executable: /bin/bash
       with_items: "{{ stats_diff.keys() }}"
       register: diff_dict
-      # If difference found it returns non-zero so errors
-      # must be ignored since errors are just differences
-      ignore_errors: true
     
     - name: Reindexing the difference dictionary
       set_fact:
@@ -107,7 +124,7 @@
         item_pre:
           - key: "{{ item.item }}"
             value:
-              context_diff: "{{ item.stdout }}"
+              content_diff: "{{ item.stdout }}"
         new_item: "{{ item_pre | items2dict }}"
       with_items: "{{ diff_dict.results }}"
     
