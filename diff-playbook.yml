@@ -29,22 +29,42 @@
           {{ f_list|unique }}
 
     - name: Find the difference between two runs
-      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}"
+      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}; true"
+      args:
+        executable: /bin/bash
       with_items: "{{ files_list }}"
-      register: diff_dict
-      # If difference found it returns non-zero so errors
-      # must be ignored since errors are just differences
-      ignore_errors: true
-    
-    - name: Reindexing the difference dictionary
+      register: file_diff
+      
+    - name: Find SElinux context of first run
+      shell: "diff <(ls -lZ {{ first_run_abs }}/{{ item }} | awk '{ print $4 }') <(ls -lZ {{ second_run_abs }}/{{ item }} | awk '{ print $4 }'); true"
+      args:
+        executable: /bin/bash
+      with_items: "{{ files_list }}"
+      register: selinux_diff
+   
+    - name: Reindexing files difference
       set_fact:
-        diff_list: "{{ diff_list | default({}) | combine(new_item, recursive=true) }}"
+        diff_dict: "{{ diff_dict | default({}) | combine(new_item, recursive=true) }}"
       vars:
         item_pre:
           - key: "{{ item.item }}"
-            value: "{{ item.stdout }}"
+            value: 
+              file_diff: "{{ item.stdout_lines }}"          
         new_item: "{{ item_pre | items2dict }}"
-      with_items: "{{ diff_dict.results }}"
-    
+      with_items: "{{ file_diff.results }}"
+      no_log: true
+
+    - name: Reindexing SElinux difference
+      set_fact:
+        diff_dict: "{{ diff_dict | default({}) | combine(new_item, recursive=true) }}"
+      vars:
+        item_pre:
+          - key: "{{ item.item }}"
+            value:
+              selinux_diff: "{{ item.stdout_lines }}"
+        new_item: "{{ item_pre | items2dict }}"
+      with_items: "{{ selinux_diff.results }}"
+      no_log: true
+
     - debug:
-        var: diff_list
+        var: diff_dict
