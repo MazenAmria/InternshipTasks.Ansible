@@ -1,7 +1,4 @@
 ---
-undercloud_files:
-  - {path: /root/test/}
-
 hypervisor_files:
   - {path: /root/test, folder: test1}
   - {path: /root/test, folder: test2}
@@ -9,3 +6,6 @@ hypervisor_files:
 
 overcloud_files:
   - {path: /root/test}
+  
+undercloud_files:
+  - {path: /root/test/}
