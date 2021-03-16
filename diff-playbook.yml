@@ -29,12 +29,9 @@
           {{ f_list|unique }}
 
     - name: Find the difference between two runs
-      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}"
+      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}; true"
       with_items: "{{ files_list }}"
       register: diff_dict
-      # If difference found it returns non-zero so errors
-      # must be ignored since errors are just differences
-      ignore_errors: true
     
     - name: Reindexing the difference dictionary
       set_fact:
