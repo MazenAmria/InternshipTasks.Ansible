@@ -1,8 +1,8 @@
 [hypervisor]
-server2
+192.168.56.3
 
 [undercloud]
-server3
+192.168.56.4
 
 [overcloud]
-server4
+192.168.56.5
