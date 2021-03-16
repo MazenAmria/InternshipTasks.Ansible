@@ -25,7 +25,7 @@
         files_list: |
           {% set f_list = [] -%}
           {% for fl in files_list.files -%}
-            {% set dump = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
+            {% set dummy = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
           {%- endfor %}
           {{ f_list|unique }}
 
