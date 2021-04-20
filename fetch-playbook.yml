@@ -7,49 +7,34 @@
       set_fact:
         items_file: ./items.yml
       when: items_file is not defined
-    
+
     - name: Include items from the items file
       include_vars:
-        file: "{{ items_file }}"
+        file: '{{ items_file }}'
         name: items
 
     - name: If the destination is defined ensure that no trailing "/" are in the path
       set_fact:
         destination: "{{ destination if destination[-1] != '/' else destination[:-1] }}"
       when: destination is defined
-    
+
     - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
       set_fact:
-        destination: ./fetched
+        destination: /root/fetched
       when: destination is not defined
-
-    - name: Converting the items into list of {path, group} dictionaries
-      set_fact:
-        items: |
-          {% set temp_items = [] -%}
-          {% for key in items.keys() -%}
-            {% for item in items[key] -%}
-              {% if item.folder is defined -%}
-                {% set dummy = temp_items.append({'path': '/'.join([item.path if item.path[-1] != '/' else item.path[:-1], item.folder]), 'group': '_'.join(key.split('_')[:-1])}) -%}
-              {%- else -%}
-                {% set dummy = temp_items.append({'path': item.path if item.path[-1] != '/' else item.path[:-1], 'group': '_'.join(key.split('_')[:-1])}) -%}
-              {%- endif %}
-            {%- endfor %}
-          {%- endfor %}
-          {{ temp_items }}
 
     - name: Check if destination is created
       stat:
-        path: "{{ destination }}"
+        path: '{{ destination }}'
       register: dest_stat
       delegate_to: localhost
       run_once: true
 
     - name: Create destination if not created
       file:
-        path: "{{ destination }}"
+        path: '{{ destination }}'
         state: directory
-        mode: 0755
+        mode: 0644
         group: root
         owner: root
       when: dest_stat.stat.exists == false
@@ -58,8 +43,16 @@
 
     - name: Fetching the files each from the corresponding hosts only.
       synchronize:
-        src: "{{ item.path }}"
-        dest: "{{ destination }}/{{ inventory_hostname }}"
+        src: |
+          {% for file in items[item] -%}
+            {% if file.folder is defined -%}
+              {{ '/'.join([file.path if file.path[-1] != '/' else file.path[:-1], file.folder]) }}
+            {%- else -%}
+              {{ file.path if file.path[-1] != '/' else file.path[:-1] }}
+            {%- endif %}
+            {{ " " }}
+          {%- endfor %}
+        dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
-      with_items: "{{ items }}"
-      when: item.group in group_names
+      when: '{{ "_".join(item.split("_")[:-1]) in group_names }}'
+      with_items: '{{ items.keys() | list }}'

@@ -1,8 +1,8 @@
 [hypervisor]
-192.168.56.3
+MazenA-KWorker1
 
 [undercloud]
-192.168.56.4
+MazenA-KWorker2
 
 [overcloud]
-192.168.56.5
+MazenA-KWorker3
