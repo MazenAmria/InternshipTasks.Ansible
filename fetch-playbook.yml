@@ -20,7 +20,7 @@
 
     - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
       set_fact:
-        destination: /root/fetched
+        destination: /root/backup
       when: destination is not defined
 
     - name: Check if destination is created
@@ -41,18 +41,24 @@
       delegate_to: localhost
       run_once: true
 
-    - name: Fetching the files each from the corresponding hosts only.
-      synchronize:
-        src: |
+    - name: Listing all the files to be fetched
+      set_fact:
+        host_items: |
+          {% set host_items = [] -%}
           {% for file in items[item] -%}
             {% if file.folder is defined -%}
-              {{ '/'.join([file.path if file.path[-1] != '/' else file.path[:-1], file.folder]) }}
+              {% set dummy = host_items.append('/'.join([file.path if file.path[-1] != '/' else file.path[:-1], file.folder])) -%}
             {%- else -%}
-              {{ file.path if file.path[-1] != '/' else file.path[:-1] }}
+              {% set dummy = host_items.append(file.path if file.path[-1] != '/' else file.path[:-1]) -%}
             {%- endif %}
-            {{ " " }}
           {%- endfor %}
-        dest: '{{ destination }}/{{ inventory_hostname }}/'
-        mode: pull
+          {{ host_items }}
       when: '{{ "_".join(item.split("_")[:-1]) in group_names }}'
       with_items: '{{ items.keys() | list }}'
+
+    - name: Fetching the files each from the corresponding hosts only.
+      synchronize:
+        src: '{{ item }}'
+        dest: '{{ destination }}/{{ inventory_hostname }}/'
+        mode: pull
+      with_items: '{{ host_items }}'

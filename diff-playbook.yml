@@ -5,67 +5,33 @@
   tasks:
     - name: Check if the path of first run and second run are passed
       fail:
-        msg: "first_run and second_run should be passed using --extra-vars"
+        msg: 'first_run and second_run should be passed using --extra-vars'
       when: first_run is not defined or second_run is not defined
 
     - name: Convert paths into absolute paths
       set_fact:
-        first_run_abs: "{{ first_run|realpath }}"
-        second_run_abs: "{{ second_run|realpath }}"
-    
+        first_run_abs: '{{ first_run|realpath }}'
+        second_run_abs: '{{ second_run|realpath }}'
+
     - name: List all files in both runs
       find:
-        paths: "{{ first_run_abs }}, {{ second_run_abs }}"
+        paths: '{{ first_run_abs }}, {{ second_run_abs }}'
         recurse: true
         hidden: true
-      register: files_list
-    
+      register: items
+
     - name: Get unique relative paths
       set_fact:
-        files_list: |
-          {% set f_list = [] -%}
-          {% for fl in files_list.files -%}
-            {% set dummy = f_list.append(fl.path[first_run_abs|length + 1:] if fl.path.startswith(first_run_abs) else fl.path[second_run_abs|length + 1:]) -%}
+        items: |
+          {% set items_tmp = [] -%}
+          {% for file in items.files -%}
+            {% set dummy = items_tmp.append(file.path[first_run_abs|length + 1:] if file.path.startswith(first_run_abs) else file.path[second_run_abs|length + 1:]) -%}
           {%- endfor %}
-          {{ f_list|unique }}
+          {{ items_tmp|unique }}
 
-    - name: Find the difference between two runs
-      shell: "git diff --no-index {{ first_run_abs }}/{{ item }} {{ second_run_abs }}/{{ item }}; true"
-      args:
-        executable: /bin/bash
-      with_items: "{{ files_list }}"
-      register: file_diff
-      
-    - name: Find SElinux context of first run
-      shell: "diff <(ls -lZ {{ first_run_abs }}/{{ item }} | awk '{ print $4 }') <(ls -lZ {{ second_run_abs }}/{{ item }} | awk '{ print $4 }'); true"
-      args:
-        executable: /bin/bash
-      with_items: "{{ files_list }}"
-      register: selinux_diff
-   
-    - name: Reindexing files difference
-      set_fact:
-        diff_dict: "{{ diff_dict | default({}) | combine(new_item, recursive=true) }}"
-      vars:
-        item_pre:
-          - key: "{{ item.item }}"
-            value: 
-              file_diff: "{{ item.stdout_lines }}"          
-        new_item: "{{ item_pre | items2dict }}"
-      with_items: "{{ file_diff.results }}"
-      no_log: true
-
-    - name: Reindexing SElinux difference
-      set_fact:
-        diff_dict: "{{ diff_dict | default({}) | combine(new_item, recursive=true) }}"
-      vars:
-        item_pre:
-          - key: "{{ item.item }}"
-            value:
-              selinux_diff: "{{ item.stdout_lines }}"
-        new_item: "{{ item_pre | items2dict }}"
-      with_items: "{{ selinux_diff.results }}"
-      no_log: true
+    - name: Find the difference between both runs
+      include_tasks: ./file_diff.yml
+      with_items: '{{ items }}'
 
     - debug:
         var: diff_dict

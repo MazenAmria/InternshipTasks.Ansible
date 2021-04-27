@@ -1,7 +1,9 @@
 # Ansible Task
 
 Write an ansible playbook that does the following:
-* Read items from Yaml file, Example:
+
+- Read items from Yaml file, Example:
+
 ```
 ---
 hypervisor_files:
@@ -15,12 +17,13 @@ overcloud_files:
   - {path: /usr/share/cbis/}
   - {path: /usr/share/cbis/utils}
 ```
-* Copy the files from the above hostgroups to the master server to a defined location, &quot;As variable in the
-same YAML file or as an argument&quot;
+
+- Copy the files from the above hostgroups to the master server to a defined location, &quot;As variable in the
+  same YAML file or as an argument&quot;
 
 Solved in `fetch-playbook.yml`
 
-* Add another playbook to compare the files from two different runs. And display the diff.
-* Not only files content need to be compared between runs, but also Permissions/Owners/Group/SELinux
+- Add another playbook to compare the files from two different runs. And display the diff.
+- Not only files content need to be compared between runs, but also Permissions/Owners/Group/SELinux
 
 Solved in `diff-playbook.yml`

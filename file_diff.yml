@@ -1,0 +1,56 @@
+- stat:
+    path: '{{ first_run_abs }}/{{ item }}'
+  register: src_stat
+
+- stat:
+    path: '{{ second_run_abs }}/{{ item }}'
+  register: dest_stat
+
+- copy:
+    src: '{{ first_run_abs }}/{{ item }}'
+    dest: '{{ second_run_abs }}/{{ item }}'
+  check_mode: true
+  diff: true
+  register: content_diff
+  when: '{{ src_stat.stat.exists and dest_stat.stat.exists }}'
+
+- set_fact:
+    content_diff:
+      diff: 'file has been deleted from the destination'
+  when: '{{ not dest_stat.stat.exists }}'
+
+- set_fact:
+    content_diff:
+      diff: 'file has been newly added to the destination'
+  when: '{{ not src_stat.stat.exists }}'
+
+- set_fact:
+    stat_diff: |
+      {% set stat_diff = {} -%}
+      {% for key in src_stat.stat.keys() -%}
+        {% if key not in dest_stat.stat.keys() -%}
+            {% set dummy = stat_diff.__setitem__(key, dict()) -%}
+            {% set dummy = stat_diff[key].__setitem__("before", src_stat.stat[key]) -%}
+        {% elif src_stat.stat[key] != dest_stat.stat[key] -%}
+          {% set dummy = stat_diff.__setitem__(key, dict()) -%}
+          {% set dummy = stat_diff[key].__setitem__("before", src_stat.stat[key]) -%}
+          {% set dummy = stat_diff[key].__setitem__("after", dest_stat.stat[key]) -%}
+        {%- endif %}
+      {%- endfor %}
+      {% for key in dest_stat.stat.keys() -%}
+        {% if key not in src_stat.stat.keys() -%}
+          {% set dummy = stat_diff.__setitem__(key, dict()) -%}
+          {% set dummy = stat_diff[key].__setitem__("after", dest_stat.stat[key]) -%}
+        {%- endif %}
+      {%- endfor %}
+      {{ stat_diff }}
+
+- set_fact:
+    diff_dict: '{{ diff_dict | default({}) | combine(file_diff, recursive=true) }}'
+  vars:
+    item_pre:
+      - key: '{{ item }}'
+        value:
+          stat_diff: '{{ stat_diff }}'
+          content_diff: '{{ content_diff.diff }}'
+    file_diff: '{{ item_pre | items2dict }}'

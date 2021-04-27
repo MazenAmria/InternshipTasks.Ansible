@@ -1,8 +1,8 @@
 [hypervisor]
-MazenA-KWorker1
+worker1
 
 [undercloud]
-MazenA-KWorker2
+worker2
 
 [overcloud]
-MazenA-KWorker3
+worker3
