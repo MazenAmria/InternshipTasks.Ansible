@@ -79,4 +79,3 @@
         mode: pull
         rsync_path: 'sudo rsync'
       with_items: '{{ host_items }}'
-      become: false
