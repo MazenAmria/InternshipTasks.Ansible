@@ -40,6 +40,7 @@
       when: dest_stat.stat.exists == false
       delegate_to: localhost
       run_once: true
+      become: true
 
     - name: Check if destination subdirectories are created
       stat:
@@ -56,6 +57,7 @@
         owner: ansible
       when: dest_stat.stat.exists == false
       delegate_to: localhost
+      become: true
 
     - name: Listing all the files to be fetched
       set_fact:
