@@ -1,11 +1,10 @@
 #!/bin/ansible-playbook
 
 - hosts: all
-  become: true
   tasks:
     - name: Add the items file by default if not passed as an argument
       set_fact:
-        items_file: ./items.yml
+        items_file: '{{ "./items.yml" | realpath }}'
       when: items_file is not defined
 
     - name: Include items from the items file
@@ -20,7 +19,7 @@
 
     - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
       set_fact:
-        destination: /root/backup
+        destination: '{{ "~/backup" | realpath }}'
       when: destination is not defined
 
     - name: Check if destination is created
