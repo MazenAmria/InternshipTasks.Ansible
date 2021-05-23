@@ -62,4 +62,5 @@
         dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
         rsync_path: 'sudo rsync'
+        use_ssh_args: true
       with_items: '{{ host_items }}'
