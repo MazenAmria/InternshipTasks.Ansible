@@ -77,5 +77,4 @@
         src: '{{ item }}'
         dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
-        rsync_path: 'sudo rsync'
       with_items: '{{ host_items }}'
