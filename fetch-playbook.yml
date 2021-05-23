@@ -1,6 +1,6 @@
 #!/bin/ansible-playbook
 
-- hosts: all
+- hosts: '{{ hosts | default("all") }}'
   tasks:
     - name: Add the items file by default if not passed as an argument
       set_fact:
