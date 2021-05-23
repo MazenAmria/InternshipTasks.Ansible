@@ -1,8 +1,8 @@
 [hypervisor]
-worker1
+client1
 
 [undercloud]
-worker2
+client0
 
 [overcloud]
-worker3
+client2

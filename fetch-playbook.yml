@@ -34,12 +34,28 @@
       file:
         path: '{{ destination }}'
         state: directory
-        mode: 0644
-        group: root
-        owner: root
+        mode: 0775
+        group: ansible
+        owner: ansible
       when: dest_stat.stat.exists == false
       delegate_to: localhost
       run_once: true
+
+    - name: Check if destination subdirectories are created
+      stat:
+        path: '{{ destination }}/{{ inventory_hostname }}'
+      register: dest_stat
+      delegate_to: localhost
+
+    - name: Create destination subdirectories if not created
+      file:
+        path: '{{ destination }}/{{ inventory_hostname }}'
+        state: directory
+        mode: 0775
+        group: ansible
+        owner: ansible
+      when: dest_stat.stat.exists == false
+      delegate_to: localhost
 
     - name: Listing all the files to be fetched
       set_fact:
@@ -62,5 +78,4 @@
         dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
         rsync_path: 'sudo rsync'
-        use_ssh_args: true
       with_items: '{{ host_items }}'
