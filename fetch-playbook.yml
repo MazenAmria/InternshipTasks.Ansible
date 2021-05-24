@@ -2,7 +2,9 @@
 
 - hosts: '{{ hosts | default("all") }}'
   become: true
+  become_method: sudo
   tasks:
+    - shell: whoami
     - name: Add the items file by default if not passed as an argument
       set_fact:
         items_file: ./items.yml
@@ -77,5 +79,4 @@
         src: '{{ item }}'
         dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
-        rsync_path: 'sudo rsync'
       with_items: '{{ host_items }}'
