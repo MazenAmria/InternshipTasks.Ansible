@@ -1,6 +1,9 @@
 ---
 - hosts: all
   tasks:
+    - shell: whoami
+      delegate_to: localhost
+    
     - name: Fetch /etc/hosts
       fetch:
         src: /etc/hosts
