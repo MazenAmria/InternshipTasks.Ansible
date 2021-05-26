@@ -62,5 +62,4 @@
             dest: '{{ destination }}/{{ inventory_hostname }}/'
             mode: pull
           with_items: '{{ host_items }}'
-          delegate_to: control_node
       when: '{{ "control" not in group_names }}'
