@@ -37,7 +37,7 @@
             group: ansible
             owner: ansible
           when: dest_stat.stat.exists == false
-      when: control in group_names  
+      when: '{{ "control" in group_names }}'
 
     - name: Listing all the files to be fetched
       set_fact:
