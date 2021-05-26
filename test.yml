@@ -1,0 +1,8 @@
+---
+- hosts: all
+  tasks:
+    - name: Fetch /etc/hosts
+      fetch:
+        src: /etc/hosts
+        dest: /home/ansible/backup
+      when: control not in group_names
