@@ -4,5 +4,5 @@
     - name: Fetch /etc/hosts
       fetch:
         src: /etc/hosts
-        dest: /home/ansible/backup
+        dest: /backup
       when: '"control" not in group_names'
