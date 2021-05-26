@@ -2,60 +2,42 @@
 
 - hosts: '{{ hosts | default("all") }}'
   tasks:
-    - shell: whoami
-    - name: Add the items file by default if not passed as an argument
-      set_fact:
-        items_file: ./items.yml
-      when: items_file is not defined
+    - name: Pre
+      block:
+        - name: Add the items file by default if not passed as an argument
+          set_fact:
+            items_file: ./items.yml
+          when: items_file is not defined
 
-    - name: Include items from the items file
-      include_vars:
-        file: '{{ items_file }}'
-        name: items
+        - name: Include items from the items file
+          include_vars:
+            file: '{{ items_file }}'
+            name: items
 
-    - name: If the destination is defined ensure that no trailing "/" are in the path
-      set_fact:
-        destination: "{{ destination if destination[-1] != '/' else destination[:-1] }}"
-      when: destination is defined
+        - name: If the destination is defined ensure that no trailing "/" are in the path
+          set_fact:
+            destination: "{{ destination if destination[-1] != '/' else destination[:-1] }}"
+          when: destination is defined
 
-    - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
-      set_fact:
-        destination: /home/ansible/backup
-      when: destination is not defined
+        - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
+          set_fact:
+            destination: /home/ansible/backup
+          when: destination is not defined
 
-    - name: Check if destination is created
-      stat:
-        path: '{{ destination }}'
-      register: dest_stat
-      delegate_to: localhost
-      run_once: true
+        - name: Check if destination is created
+          stat:
+            path: '{{ destination }}'
+          register: dest_stat
 
-    - name: Create destination if not created
-      file:
-        path: '{{ destination }}'
-        state: directory
-        mode: 0775
-        group: ansible
-        owner: ansible
-      when: dest_stat.stat.exists == false
-      delegate_to: localhost
-      run_once: true
-
-    - name: Check if destination subdirectories are created
-      stat:
-        path: '{{ destination }}/{{ inventory_hostname }}'
-      register: dest_stat
-      delegate_to: localhost
-
-    - name: Create destination subdirectories if not created
-      file:
-        path: '{{ destination }}/{{ inventory_hostname }}'
-        state: directory
-        mode: 0775
-        group: ansible
-        owner: ansible
-      when: dest_stat.stat.exists == false
-      delegate_to: localhost
+        - name: Create destination if not created
+          file:
+            path: '{{ destination }}'
+            state: directory
+            mode: 0775
+            group: ansible
+            owner: ansible
+          when: dest_stat.stat.exists == false
+      when: control in group_names  
 
     - name: Listing all the files to be fetched
       set_fact:
