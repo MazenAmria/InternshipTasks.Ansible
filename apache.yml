@@ -1,6 +1,6 @@
 ---
 - name: Apache server installed
-  hosts: all
+  hosts: '{{ hosts | default("all") }}'
   tasks:
   - name: latest Apache version installed
     yum:
