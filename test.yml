@@ -9,4 +9,4 @@
           fetch:
             src: /etc/hosts
             dest: /home/ansible/backup
-      when: 'control' not in group_names
+      when: '"control" not in group_names'
