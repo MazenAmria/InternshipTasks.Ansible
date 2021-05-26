@@ -39,26 +39,28 @@
           when: dest_stat.stat.exists == false
       when: '{{ "control" in group_names }}'
 
-    - name: Listing all the files to be fetched
-      set_fact:
-        host_items: |
-          {% set host_items = [] -%}
-          {% for file in items[item] -%}
-            {% if file.folder is defined -%}
-              {% set dummy = host_items.append('/'.join([file.path if file.path[-1] != '/' else file.path[:-1], file.folder])) -%}
-            {%- else -%}
-              {% set dummy = host_items.append(file.path if file.path[-1] != '/' else file.path[:-1]) -%}
-            {%- endif %}
-          {%- endfor %}
-          {{ host_items }}
-      when: '{{ "_".join(item.split("_")[:-1]) in group_names }}'
-      with_items: '{{ items.keys() | list }}'
+    - name: Fetching files
+      block:
+        - name: Listing all the files to be fetched
+          set_fact:
+            host_items: |
+              {% set host_items = [] -%}
+              {% for file in items[item] -%}
+                {% if file.folder is defined -%}
+                  {% set dummy = host_items.append('/'.join([file.path if file.path[-1] != '/' else file.path[:-1], file.folder])) -%}
+                {%- else -%}
+                  {% set dummy = host_items.append(file.path if file.path[-1] != '/' else file.path[:-1]) -%}
+                {%- endif %}
+              {%- endfor %}
+              {{ host_items }}
+          when: '{{ "_".join(item.split("_")[:-1]) in group_names }}'
+          with_items: '{{ items.keys() | list }}'
 
-    - name: Fetching the files each from the corresponding hosts only.
-      synchronize:
-        src: '{{ item }}'
-        dest: '{{ destination }}/{{ inventory_hostname }}/'
-        mode: pull
-        rsync_path: 'sudo rsync'
-      with_items: '{{ host_items }}'
+        - name: Fetching the files each from the corresponding hosts only.
+          synchronize:
+            src: '{{ item }}'
+            dest: '{{ destination }}/{{ inventory_hostname }}/'
+            mode: pull
+          with_items: '{{ host_items }}'
+          delegate_to: control_node
       when: '{{ "control" not in group_names }}'
