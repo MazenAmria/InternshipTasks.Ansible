@@ -1,12 +1,8 @@
 ---
 - hosts: all
   tasks:
-    - block:
-        - shell: whoami
-          delegate_to: control_node
-        
-        - name: Fetch /etc/hosts
-          fetch:
-            src: /etc/hosts
-            dest: /home/ansible/backup
+    - name: Fetch /etc/hosts
+      fetch:
+        src: /etc/hosts
+        dest: /home/ansible/backup
       when: '"control" not in group_names'
