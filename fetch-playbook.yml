@@ -2,28 +2,28 @@
 
 - hosts: '{{ hosts | default("all") }}'
   tasks:
+    - name: Add the items file by default if not passed as an argument
+      set_fact:
+        items_file: ./items.yml
+      when: items_file is not defined
+
+    - name: Include items from the items file
+      include_vars:
+        file: '{{ items_file }}'
+        name: items
+
+    - name: If the destination is defined ensure that no trailing "/" are in the path
+      set_fact:
+        destination: "{{ destination if destination[-1] != '/' else destination[:-1] }}"
+      when: destination is defined
+
+    - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
+      set_fact:
+        destination: /home/ansible/backup
+      when: destination is not defined
+
     - name: Pre
       block:
-        - name: Add the items file by default if not passed as an argument
-          set_fact:
-            items_file: ./items.yml
-          when: items_file is not defined
-
-        - name: Include items from the items file
-          include_vars:
-            file: '{{ items_file }}'
-            name: items
-
-        - name: If the destination is defined ensure that no trailing "/" are in the path
-          set_fact:
-            destination: "{{ destination if destination[-1] != '/' else destination[:-1] }}"
-          when: destination is defined
-
-        - name: Add the destination by default if not passed as an argument or added as an variable in the items file.
-          set_fact:
-            destination: /home/ansible/backup
-          when: destination is not defined
-
         - name: Check if destination is created
           stat:
             path: '{{ destination }}'
