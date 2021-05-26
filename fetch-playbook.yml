@@ -60,3 +60,4 @@
         dest: '{{ destination }}/{{ inventory_hostname }}/'
         mode: pull
       with_items: '{{ host_items }}'
+      when: '{{ "control" not in group_names }}'
